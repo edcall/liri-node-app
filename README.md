@@ -8,7 +8,7 @@ liri.js holds the javascript code that is run on Node.  key.js holds the api key
 
 3. Give start-to-finish instructions on how to run the app
 
-I am unclear as to when the packages are to be installed and what they are for.  I know they go before you run the javacript on node.js. to run the app you run the liri file in node by typing in node liri.js
+type  "node liri.js movie-this" + movie name to look up movie info.
 
 4. Include screenshots, gifs or videos of the app functioning
 
