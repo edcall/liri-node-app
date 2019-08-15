@@ -1,167 +1,135 @@
-// Info for Spotify
+//require all .env files
 require("dotenv").config();
-var Spotify = require("node-spotify-api");
+
+//import keys.js and node-spotify-api so that we can access the spotify export
 var keys = require("./keys.js");
+var Spotify = require('node-spotify-api');
+
+
 var spotify = new Spotify(keys.spotify);
 
-// Info for Request
 var request = require("request");
-
-// Info for Moment -- Date Formatting
-var moment = require("moment");
-
-// Info for fs
 var fs = require("fs");
 
-
-// Takes command
 var command = process.argv[2];
+var searchTerm = process.argv[3];
+
+function start(){
+    switch (command){
+      case "concert-this":
+        songLocation();
+        break;
+      case "spotify-this-song":
+        spotifySearch();
+        break;
+      case "movie-this":
+        movieInfo();
+        break;
+      case "do-what-it-says":
+        doRandom();
+        break;
+      default:
+        console.log("\n'concert-this'\n'spotify-this-song'\n'movie-this'\n'do-what-it-says'\n\n" + "Example input command: node liri movie-this mean girls.")
+    }
+
+}
+
+start();
 
 
-// IF you want to know about a CONCERT
-if (command === "concert-this") {
+function songLocation(){
 
-  var artist = process.argv[3];
+  var artist = searchTerm;
+  var queryUrl = "https://rest.bandsintown.com/artists/" + artist + "/events?app_id=codingbootcamp";
 
-  request("https://rest.bandsintown.com/artists/" + artist + "/events?app_id=codingbootcamp", function (error, response, body) {
+  request(queryUrl, function(error, response, body) {
 
+    // If the request is successful
     if (!error && response.statusCode === 200) {
-      console.log("-------------------------------------");
-      console.log("Venue: " + JSON.parse(body)[0].venue.name);
-      console.log("Location: " + JSON.parse(body)[0].venue.city + " " + JSON.parse(body)[0].venue.region);
-      console.log("Date: " + moment(JSON.parse(body)[0].datetime).format("MM/DD/YYYY"));
-      console.log("-------------------------------------");
+
+      //show just the first result
+      // console.log(JSON.parse(body)[0]);
+
+      console.log("Venue Name: " + JSON.parse(body)[0].venue.name);
+      console.log("Venue Location: " + JSON.parse(body)[0].venue.city);
+      console.log("Date of Show: " + JSON.parse(body)[0].datetime);
     }
   });
- 
-} else if (command === "spotify-this-song") {
-  var song = process.argv[3];
-
-  if (song === undefined) {
-    song = "The Sign";
-  }
-
-  spotify.search({
-    type: "track",
-    query: song
-  }, function (err, data) {
-    if (err) {
-      return console.log("Error occured: " + err);
-    }
   
-    console.log("-------------------------------------");
-    console.log("Artist: " + data.tracks.items[0].artists.name);
-    console.log("Song Name: " + data.tracks.items[0].name);
-    console.log("Preview Link: " + data.tracks.items[0].preview_url);
-    console.log("Album: " + data.tracks.items[0].album.name);
-    console.log("-------------------------------------");
-  });
+}
 
+function spotifySearch(){
 
-  // IF you want to know about a MOVIE
-} else if (command === "movie-this") {
+  if(searchTerm){
 
-  var movie = process.argv[3];
+    spotify.search({ type: 'track', query: searchTerm }, function(err, data) {
+      if (err) {
+        return console.log('Error occurred: ' + err);
+      }
+   
+      // console.log(data.tracks.items[0]); 
 
-  if (movie === undefined) {
-    movie = "Mr. Nobody";
+      console.log("Artist: " + data.tracks.items[0].artists[0].name);
+      console.log("Song Name: " + data.tracks.items[0].name);
+      console.log("Spotify Preview Link: " + data.tracks.items[0].external_urls.spotify);
+      console.log("Album: " + data.tracks.items[0].album.name);
+    });
   }
+  else{
+    spotify.search({ type: 'track', query: "The Sign by Ace of Base" }, function(err, data) {
+      if (err) {
+        return console.log('Error occurred: ' + err);
+      }
+     
+      console.log(data.tracks.items[0]); 
+      });
+  }
+  
+  
+}
 
-  request("http://www.omdbapi.com/?t=" + movie + "&y=&plot=short&apikey=trilogy", function (error, response, body) {
+function movieInfo(){
 
+  var movie = searchTerm;
+  var queryUrl = "http://www.omdbapi.com/?t=" + movie + "&y=&plot=short&apikey=trilogy";
+
+  request(queryUrl, function(error, response, body) {
+
+    // If the request is successful
     if (!error && response.statusCode === 200) {
-
-      // Information about Movie
-      console.log("-------------------------------------");
-      console.log("Title: " + JSON.parse(body).Title);
-      console.log("Year Released: " + JSON.parse(body).Year);
+  
+      // Parse the body of the site and recover just the imdbRating
+      // (Note: The syntax below for parsing isn't obvious. Just spend a few moments dissecting it).
+      console.log("Movie Title: " + JSON.parse(body).Title);
+      console.log("Release Year: " + JSON.parse(body).Year);
       console.log("IMDB Rating: " + JSON.parse(body).imdbRating);
-      console.log("Rotten Tomatoes Rating: " + JSON.parse(body).Ratings[1].Value);
-      console.log("Country Produced: " + JSON.parse(body).Country);
+      console.log("Rotten Tomatoes Rating: " + JSON.parse(body).Ratings[1].value);
+      console.log("Country: " + JSON.parse(body).Country);
       console.log("Language: " + JSON.parse(body).Language);
       console.log("Plot: " + JSON.parse(body).Plot);
       console.log("Actors: " + JSON.parse(body).Actors);
-      console.log("-------------------------------------");
     }
   });
   
-} else if (command === "do-what-it-says") {
+  
+}
 
-  fs.readFile("random.txt", "utf8", function (error, data) {
+function doRandom(){
+  fs.readFile("random.txt", "utf8", function(error, data) {
 
+    // If the code experiences any errors it will log the error to the console.
     if (error) {
       return console.log(error);
     }
-
-    console.log(data);
-    var dataArr = data.split(",");
-    console.log(dataArr);
-
-    command = dataArr[0];
-    whatToCommand = dataArr[1];
-
-    if (command === "concert-this") {
-
-      var artist = whatToCommand;
-
-      request("https://rest.bandsintown.com/artists/" + artist + "/events?app_id=codingbootcamp", function (error, response, body) {
-
-        if (!error && response.statusCode === 200) {
-          console.log("-------------------------------------");
-          console.log("Venue: " + JSON.parse(body)[0].venue.name);
-          console.log("Location: " + JSON.parse(body)[0].venue.city + " " + JSON.parse(body)[0].venue.region);
-          console.log("Date: " + moment(JSON.parse(body)[0].datetime).format("MM/DD/YYYY"));
-          console.log("-------------------------------------");
-        }
-      });
-      
-    } else if (command === "spotify-this-song") {
-      var song = whatToCommand;
-      if (song === undefined) {
-        song = "The Sign";
-      }
-      spotify.search({
-        type: "track",
-        query: song
-      }, function (err, data) {
-        if (err) {
-          return console.log("Error occured: " + err);
-        }
-        console.log(data.tracks.items[0].album[0]);
-        
-      });
-      
-    } else if (command === "movie-this") {
-
-      var movie = whatToCommand;
-
-      if (movie === undefined) {
-        movie = "Mr. Nobody";
-      }
-
-      request("http://www.omdbapi.com/?t=" + movie + "&y=&plot=short&apikey=trilogy", function (error, response, body) {
-
-        if (!error && response.statusCode === 200) {          
-          console.log("-------------------------------------");
-          console.log("Title: " + JSON.parse(body).Title);
-          console.log("Year Released: " + JSON.parse(body).Year);
-          console.log("IMDB Rating: " + JSON.parse(body).imdbRating);
-          console.log("Rotten Tomatoes Rating: " + JSON.parse(body).Ratings[1].Value);
-          console.log("Country Produced: " + JSON.parse(body).Country);
-          console.log("Language: " + JSON.parse(body).Language);
-          console.log("Plot: " + JSON.parse(body).Plot);
-          console.log("Actors: " + JSON.parse(body).Actors);
-          console.log("-------------------------------------");
-        }
-      });      
-    } else {
-      console.log("Command Error");
-    }
-
-    console.log("-------------------------------------");
-    console.log("Command: ", command);
-    console.log("-------------------------------------");
-  });
   
-  console.log("Command Error");
+    // We will then print the contents of data as a single string
+    var inputs = data.split(",");
+    console.log(inputs);
+  
+    command = inputs[0];
+    searchTerm = inputs[1];
+
+    start();
+  
+  });
 }
