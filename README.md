@@ -8,7 +8,7 @@ liri.js holds the javascript code that is run on Node.  key.js holds the api key
 
 3. Give start-to-finish instructions on how to run the app
 
-type  "node liri.js movie-this" + movie name to look up movie info.
+type node liri.js to start app.
 
 4. Include screenshots, gifs or videos of the app functioning
 
@@ -20,4 +20,8 @@ javascript api node.js
 
 7. State your role in the app development
 
-I developed the app with help in tutoring by Armando.
+I developed the app with help in tutoring by Armando.type  "node liri.js movie-this" + movie name to look up movie info.
+
+
+ 
+. ntain a link5. Contain a link 
